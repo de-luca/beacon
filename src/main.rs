@@ -15,17 +15,17 @@ use futures_util::{
     stream::TryStreamExt,
     StreamExt,
 };
-use log::info;
+use log::{debug, info};
 use tokio::net::{TcpListener, TcpStream};
 
 
 async fn handle_connection(handler: Handler, raw_stream: TcpStream, addr: SocketAddr) {
-    info!("Incoming TCP connection from: {}", addr);
+    debug!("Incoming TCP connection from: {}", addr);
 
     let ws_stream = tokio_tungstenite::accept_async(raw_stream)
         .await
         .expect("Error during the websocket handshake occurred");
-    info!("WebSocket connection established: {}", addr);
+    debug!("WebSocket connection established: {}", addr);
 
     // Insert the write part of this peer to the peer map.
     let (tx, rx) = unbounded();
@@ -34,7 +34,7 @@ async fn handle_connection(handler: Handler, raw_stream: TcpStream, addr: Socket
     let (outgoing, incoming) = ws_stream.split();
 
     let in_handler = incoming.try_for_each(|msg| {
-        info!("Received a message from {}: {}", addr, msg.to_text().unwrap());
+        debug!("Received a message from {}: {}", addr, msg.to_text().unwrap());
         handler.handle(peer_id, msg);
         future::ok(())
     });
@@ -44,7 +44,7 @@ async fn handle_connection(handler: Handler, raw_stream: TcpStream, addr: Socket
     pin_mut!(in_handler, out_handler);
     future::select(in_handler, out_handler).await;
 
-    info!("{} disconnected", &addr);
+    debug!("{} disconnected", &addr);
     handler.remove_peer(&peer_id);
 }
 

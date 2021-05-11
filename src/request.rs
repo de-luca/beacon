@@ -3,7 +3,7 @@ use serde::{Deserialize};
 
 #[derive(Deserialize, Debug)]
 #[serde(tag = "method", content = "params")]
-#[serde(rename_all = "lowercase")]
+#[serde(rename_all(deserialize = "lowercase"))]
 pub enum Payload {
     CREATE(Create),
     JOIN(Join),
@@ -14,14 +14,14 @@ pub enum Payload {
 pub struct Create {}
 
 #[derive(Deserialize, Debug)]
-#[serde(rename_all = "snake_case")]
+#[serde(rename_all(deserialize = "camelCase"))]
 pub struct Join {
     pub room_id: Uuid,
 }
 
 #[derive(Deserialize, Debug)]
-#[serde(rename_all = "snake_case")]
+#[serde(rename_all(deserialize = "camelCase"))]
 pub struct Signal {
     pub peer_id: Uuid,
-    pub payload: serde_json::Value,
+    pub data: serde_json::Value,
 }

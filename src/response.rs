@@ -3,16 +3,17 @@ use serde::{Serialize};
 use std::collections::HashSet;
 
 #[derive(Serialize, Debug)]
-#[serde(tag = "method", content = "data")]
+#[serde(tag = "event", content = "data")]
 #[serde(rename_all = "lowercase")]
 pub enum Payload {
-    CREATE(Uuid),
-    JOIN(HashSet<Uuid>),
+    CREATED(Uuid),
+    JOINED(HashSet<Uuid>),
     SIGNAL(Signal),
 }
 
 #[derive(Serialize, Debug)]
+#[serde(rename_all(serialize = "camelCase"))]
 pub struct Signal {
     pub peer_id: Uuid,
-    pub payload: serde_json::Value,
+    pub data: serde_json::Value,
 }

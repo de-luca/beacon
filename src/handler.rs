@@ -75,7 +75,7 @@ impl Handler {
         self.peers.lock().unwrap()
             .get(&peer_id).unwrap()
             .unbounded_send(Message::Text(
-                serde_json::to_string(&response::Payload::CREATE(room_id)).unwrap()
+                serde_json::to_string(&response::Payload::CREATED(room_id)).unwrap()
             )).unwrap();
     }
 
@@ -90,7 +90,7 @@ impl Handler {
             None => tx.unbounded_send(Message::Text("NOT A ROOM".into())).unwrap(),
             Some(peers) => {
                 tx.unbounded_send(Message::Text(
-                    serde_json::to_string(&response::Payload::JOIN(peers.to_owned())).unwrap()
+                    serde_json::to_string(&response::Payload::JOINED(peers.to_owned())).unwrap()
                 )).unwrap();
                 peers.insert(peer_id);
             }
@@ -104,7 +104,7 @@ impl Handler {
                 serde_json::to_string(&response::Payload::SIGNAL(
                     response::Signal{
                         peer_id,
-                        payload: params.payload.to_owned(),
+                        data: params.data.to_owned(),
                     }
                 )).unwrap()
             )).unwrap();
