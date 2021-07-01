@@ -1,6 +1,7 @@
 mod handler;
 mod request;
 mod response;
+mod room;
 
 use crate::handler::Handler;
 use std::{
@@ -17,7 +18,17 @@ use futures_util::{
 };
 use log::{debug, info};
 use tokio::net::{TcpListener, TcpStream};
+use tokio::time::{interval, Duration};
 
+const CLEANER_INTERVAL: u64 = 5 * 60;
+
+async fn register_cleaner(handler: Handler) {
+    let mut interval = interval(Duration::from_secs(CLEANER_INTERVAL));
+    loop {
+        interval.tick().await;
+        handler.clean();
+    }
+}
 
 async fn handle_connection(handler: Handler, raw_stream: TcpStream, addr: SocketAddr) {
     debug!("Incoming TCP connection from: {}", addr);
@@ -52,9 +63,12 @@ async fn handle_connection(handler: Handler, raw_stream: TcpStream, addr: Socket
 #[tokio::main]
 async fn main() -> Result<(), IoError>{
     let _ = env_logger::try_init();
-    let addr = env::args().nth(1).unwrap_or_else(|| "127.0.0.1:8080".to_string());
+    let addr = env::args().nth(1).unwrap_or_else(|| "127.0.0.1:3030".to_string());
 
     let handler = Handler::new();
+
+    // Create a cleaning routine
+    tokio::spawn(register_cleaner(handler.clone()));
 
     // Create the event loop and TCP listener we'll accept connections on.
     let try_socket = TcpListener::bind(&addr).await;

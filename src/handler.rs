@@ -1,17 +1,17 @@
 use crate::request;
 use crate::response;
+use crate::room::Room;
 
 use futures_channel::mpsc::UnboundedSender;
 use tokio_tungstenite::tungstenite::Message;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::sync::{Mutex, Arc};
 use uuid::Uuid;
 use log::info;
 
 type Tx = UnboundedSender<Message>;
 type PeerMap = Arc<Mutex<HashMap<Uuid, Tx>>>;
-type RoomMap = Arc<Mutex<HashMap<Uuid, HashSet<Uuid>>>>;
-
+type RoomMap = Arc<Mutex<HashMap<Uuid, Room>>>;
 
 #[derive(Clone, Debug)]
 pub(crate) struct Handler {
@@ -36,7 +36,7 @@ impl Handler {
     pub(crate) fn remove_peer(&self, id: &Uuid) {
         self.peers.lock().unwrap().remove(&id);
         self.rooms.lock().unwrap().iter_mut().for_each(|room| {
-            room.1.remove(&id);
+            room.1.remove_peer(&id);
         });
     }
 
@@ -65,17 +65,16 @@ impl Handler {
     }
 
     fn create(&self, peer_id: Uuid) {
-        let room_id = Uuid::new_v4();
-        let mut room_peers = HashSet::new();
-        room_peers.insert(peer_id);
+        let mut room = Room::new();
+        room.add_peer(peer_id);
 
-        self.rooms.lock().unwrap().insert(room_id, room_peers);
-        info!("CREATED THE ROOM {}", room_id);
+        self.rooms.lock().unwrap().insert(room.id, room.to_owned());
+        info!("CREATED THE ROOM {}", &room.id);
 
         self.peers.lock().unwrap()
             .get(&peer_id).unwrap()
             .unbounded_send(Message::Text(
-                serde_json::to_string(&response::Payload::CREATED(room_id)).unwrap()
+                serde_json::to_string(&response::Payload::CREATED(room.id.to_owned())).unwrap()
             )).unwrap();
     }
 
@@ -88,11 +87,11 @@ impl Handler {
 
         match room {
             None => tx.unbounded_send(Message::Text("NOT A ROOM".into())).unwrap(),
-            Some(peers) => {
+            Some(room) => {
                 tx.unbounded_send(Message::Text(
-                    serde_json::to_string(&response::Payload::JOINED(peers.to_owned())).unwrap()
+                    serde_json::to_string(&response::Payload::JOINED(room.to_owned().peers)).unwrap()
                 )).unwrap();
-                peers.insert(peer_id);
+                room.add_peer(peer_id);
             }
         }
     }
@@ -108,5 +107,10 @@ impl Handler {
                     }
                 )).unwrap()
             )).unwrap();
+    }
+
+    pub(crate) fn clean(&self) {
+        self.rooms.lock().unwrap()
+            .retain( | &_, room | !room.dead());
     }
 }
