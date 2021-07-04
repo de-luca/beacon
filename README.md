@@ -6,11 +6,13 @@
 
 ### Format
 ```shell
+cargo install rustfmt
 cargo fmt
 ```
 
 ### Lint
 ```shell
+cargo install clippy
 cargo clippy
 ```
 
