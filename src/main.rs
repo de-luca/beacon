@@ -4,19 +4,10 @@ mod response;
 mod room;
 
 use crate::handler::Handler;
-use std::{
-    env,
-    io::Error as IoError,
-    net::SocketAddr,
-};
-use futures_channel::mpsc::{unbounded};
-use futures_util::{
-    future,
-    pin_mut,
-    stream::TryStreamExt,
-    StreamExt,
-};
+use futures_channel::mpsc::unbounded;
+use futures_util::{future, pin_mut, stream::TryStreamExt, StreamExt};
 use log::{debug, info};
+use std::{env, io::Error as IoError, net::SocketAddr};
 use tokio::net::{TcpListener, TcpStream};
 use tokio::time::{interval, Duration};
 
@@ -45,7 +36,11 @@ async fn handle_connection(handler: Handler, raw_stream: TcpStream, addr: Socket
     let (outgoing, incoming) = ws_stream.split();
 
     let in_handler = incoming.try_for_each(|msg| {
-        debug!("Received a message from {}: {}", addr, msg.to_text().unwrap());
+        debug!(
+            "Received a message from {}: {}",
+            addr,
+            msg.to_text().unwrap()
+        );
         handler.handle(peer_id, msg);
         future::ok(())
     });
@@ -59,11 +54,12 @@ async fn handle_connection(handler: Handler, raw_stream: TcpStream, addr: Socket
     handler.remove_peer(&peer_id);
 }
 
-
 #[tokio::main]
-async fn main() -> Result<(), IoError>{
+async fn main() -> Result<(), IoError> {
     let _ = env_logger::try_init();
-    let addr = env::args().nth(1).unwrap_or_else(|| "127.0.0.1:3030".to_string());
+    let addr = env::args()
+        .nth(1)
+        .unwrap_or_else(|| "127.0.0.1:3030".to_string());
 
     let handler = Handler::new();
 

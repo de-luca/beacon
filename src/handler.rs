@@ -3,11 +3,11 @@ use crate::response;
 use crate::room::Room;
 
 use futures_channel::mpsc::UnboundedSender;
-use tokio_tungstenite::tungstenite::Message;
-use std::collections::HashMap;
-use std::sync::{Mutex, Arc};
-use uuid::Uuid;
 use log::info;
+use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
+use tokio_tungstenite::tungstenite::Message;
+use uuid::Uuid;
 
 type Tx = UnboundedSender<Message>;
 type PeerMap = Arc<Mutex<HashMap<Uuid, Tx>>>;
@@ -41,13 +41,21 @@ impl Handler {
     }
 
     pub(crate) fn handle(&self, peer_id: Uuid, msg: Message) {
-        if msg.is_close() { return }
-        if msg.is_pong()  { return }
-        if msg.is_ping()  {
-            self.peers.lock().unwrap()
-                .get(&peer_id).unwrap()
-                .unbounded_send(Message::Pong(msg.into_data())).unwrap();
-            return
+        if msg.is_close() {
+            return;
+        }
+        if msg.is_pong() {
+            return;
+        }
+        if msg.is_ping() {
+            self.peers
+                .lock()
+                .unwrap()
+                .get(&peer_id)
+                .unwrap()
+                .unbounded_send(Message::Pong(msg.into_data()))
+                .unwrap();
+            return;
         }
 
         match serde_json::from_str::<request::Payload>(msg.to_text().unwrap()) {
@@ -58,9 +66,9 @@ impl Handler {
 
     fn route(&self, peer_id: Uuid, payload: &request::Payload) {
         match payload {
-            request::Payload::CREATE(_) => self.create(peer_id),
-            request::Payload::JOIN(params) => self.join(peer_id, params),
-            request::Payload::SIGNAL(params) => self.signal(peer_id, params),
+            request::Payload::Create(_) => self.create(peer_id),
+            request::Payload::Join(params) => self.join(peer_id, params),
+            request::Payload::Signal(params) => self.signal(peer_id, params),
         };
     }
 
@@ -71,11 +79,15 @@ impl Handler {
         self.rooms.lock().unwrap().insert(room.id, room.to_owned());
         info!("CREATED THE ROOM {}", &room.id);
 
-        self.peers.lock().unwrap()
-            .get(&peer_id).unwrap()
+        self.peers
+            .lock()
+            .unwrap()
+            .get(&peer_id)
+            .unwrap()
             .unbounded_send(Message::Text(
-                serde_json::to_string(&response::Payload::CREATED(room.id.to_owned())).unwrap()
-            )).unwrap();
+                serde_json::to_string(&response::Payload::Created(room.id.to_owned())).unwrap(),
+            ))
+            .unwrap();
     }
 
     fn join(&self, peer_id: Uuid, params: &request::Join) {
@@ -86,31 +98,37 @@ impl Handler {
         let room = locked_rooms.get_mut(&params.room_id);
 
         match room {
-            None => tx.unbounded_send(Message::Text("NOT A ROOM".into())).unwrap(),
+            None => tx
+                .unbounded_send(Message::Text("NOT A ROOM".into()))
+                .unwrap(),
             Some(room) => {
                 tx.unbounded_send(Message::Text(
-                    serde_json::to_string(&response::Payload::JOINED(room.to_owned().peers)).unwrap()
-                )).unwrap();
+                    serde_json::to_string(&response::Payload::Joined(room.to_owned().peers))
+                        .unwrap(),
+                ))
+                .unwrap();
                 room.add_peer(peer_id);
             }
         }
     }
 
     fn signal(&self, peer_id: Uuid, params: &request::Signal) {
-        self.peers.lock().unwrap()
-            .get(&params.peer_id).unwrap()
+        self.peers
+            .lock()
+            .unwrap()
+            .get(&params.peer_id)
+            .unwrap()
             .unbounded_send(Message::Text(
-                serde_json::to_string(&response::Payload::SIGNAL(
-                    response::Signal{
-                        peer_id,
-                        data: params.data.to_owned(),
-                    }
-                )).unwrap()
-            )).unwrap();
+                serde_json::to_string(&response::Payload::Signal(response::Signal {
+                    peer_id,
+                    data: params.data.to_owned(),
+                }))
+                .unwrap(),
+            ))
+            .unwrap();
     }
 
     pub(crate) fn clean(&self) {
-        self.rooms.lock().unwrap()
-            .retain( | &_, room | !room.dead());
+        self.rooms.lock().unwrap().retain(|&_, room| !room.dead());
     }
 }

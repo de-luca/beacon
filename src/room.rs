@@ -1,6 +1,6 @@
-use uuid::Uuid;
-use std::time::Instant;
 use std::collections::HashSet;
+use std::time::Instant;
+use uuid::Uuid;
 
 const GRACE_PERIOD: u64 = 5 * 60;
 

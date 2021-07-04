@@ -1,13 +1,13 @@
+use serde::Deserialize;
 use uuid::Uuid;
-use serde::{Deserialize};
 
 #[derive(Deserialize, Debug)]
 #[serde(tag = "method", content = "params")]
 #[serde(rename_all(deserialize = "lowercase"))]
 pub enum Payload {
-    CREATE(Create),
-    JOIN(Join),
-    SIGNAL(Signal),
+    Create(Create),
+    Join(Join),
+    Signal(Signal),
 }
 
 #[derive(Deserialize, Debug)]

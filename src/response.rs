@@ -1,14 +1,14 @@
-use uuid::Uuid;
-use serde::{Serialize};
+use serde::Serialize;
 use std::collections::HashSet;
+use uuid::Uuid;
 
 #[derive(Serialize, Debug)]
 #[serde(tag = "event", content = "data")]
 #[serde(rename_all = "lowercase")]
 pub enum Payload {
-    CREATED(Uuid),
-    JOINED(HashSet<Uuid>),
-    SIGNAL(Signal),
+    Created(Uuid),
+    Joined(HashSet<Uuid>),
+    Signal(Signal),
 }
 
 #[derive(Serialize, Debug)]
