@@ -9,10 +9,24 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: get version
+        id: version
+        run: echo ::set-output name=version::${GITHUB_REF/refs\/tags\//}
+
       - name: build
-        run: docker run --rm -it -v "$(pwd)":/home/rust/src ekidd/rust-musl-builder cargo build --release
+        run: docker run --rm -u root -v "$(pwd)":/home/rust/src ekidd/rust-musl-builder cargo build --release
+
+      - name: archive
+        id: archive
+        run: |
+          dir="beacon_x86_64-unknown-linux-musl_${{ steps.version.outputs.version }}"
+          mkdir -p "$dir"
+          cp README.md "$dir/"
+          cp target/x86_64-unknown-linux-musl/release/beacon "$dir/"
+          tar czf "$dir.tar.gz" "$dir"
+          echo "::set-output name=asset::$dir.tar.gz"
 
       - uses: ncipollo/release-action@v1
         with:
-          artifacts: "target/x86_64-unknown-linux-musl/release/beacon"
+          artifacts: ${{ steps.archive.outputs.asset }}
           token: ${{ secrets.GITHUB_TOKEN }}
