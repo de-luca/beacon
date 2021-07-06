@@ -1,5 +1,8 @@
 name: Clippy Fmt
-on: push
+on:
+  push:
+    branches:
+      - '*'
 jobs:
   clippy_fmt:
     runs-on: ubuntu-latest
