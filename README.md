@@ -2,19 +2,32 @@
 
 > Interplanar Beacon
 
-A "room oriented" signaling server using websockets.
+A "room oriented" signaling server using websockets.  
 
 ## Usage
 ```shell
-# command
-beacon [interface]
-# with specific interface
-beacon 0.0.0.0:3030
+Usage: beacon [<addr>] -c <cert> -k <key>
+
+Beacon server
+
+Options:
+  -c, --cert        cert file
+  -k, --key         key file
+  --help            display usage information
+```
+
+```shell
 # with specific log level
-RUST_LOG=debug beacon
+RUST_LOG=debug beacon [...]
 ```
 
 ## Dev tools
+
+### Local certs
+Use [mkcert](https://github.com/FiloSottile/mkcert) for simplicity
+```shell
+ mkcert -install localhost
+```
 
 ### Format
 ```shell
