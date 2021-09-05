@@ -34,9 +34,9 @@ impl Handler {
     }
 
     pub(crate) fn remove_peer(&self, id: &Uuid) {
-        self.peers.lock().unwrap().remove(&id);
+        self.peers.lock().unwrap().remove(id);
         self.rooms.lock().unwrap().iter_mut().for_each(|room| {
-            room.1.remove_peer(&id);
+            room.1.remove_peer(id);
         });
     }
 
