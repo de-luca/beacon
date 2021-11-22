@@ -21,6 +21,8 @@ Options:
 RUST_LOG=debug beacon [...]
 ```
 
+Start without TLS if no cert nor key is given.
+
 ## Dev tools
 
 ### Local certs
