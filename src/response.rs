@@ -9,6 +9,7 @@ pub enum Payload {
     Created(Uuid),
     Joined(HashSet<Uuid>),
     Signal(Signal),
+    Error(Error),
 }
 
 #[derive(Serialize, Debug)]
@@ -16,4 +17,10 @@ pub enum Payload {
 pub struct Signal {
     pub peer_id: Uuid,
     pub data: serde_json::Value,
+}
+
+#[derive(Serialize, Debug)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum Error {
+    RoomDoesNotExists,
 }

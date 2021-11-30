@@ -4,6 +4,7 @@ use crate::room::Room;
 
 use futures_channel::mpsc::UnboundedSender;
 use log::info;
+use response::{Error, Payload, Signal};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use tokio_tungstenite::tungstenite::Message;
@@ -85,7 +86,7 @@ impl Handler {
             .get(&peer_id)
             .unwrap()
             .unbounded_send(Message::Text(
-                serde_json::to_string(&response::Payload::Created(room.id.to_owned())).unwrap(),
+                serde_json::to_string(&Payload::Created(room.id.to_owned())).unwrap(),
             ))
             .unwrap();
     }
@@ -99,12 +100,13 @@ impl Handler {
 
         match room {
             None => tx
-                .unbounded_send(Message::Text("NOT A ROOM".into()))
+                .unbounded_send(Message::Text(
+                    serde_json::to_string(&Payload::Error(Error::RoomDoesNotExists)).unwrap(),
+                ))
                 .unwrap(),
             Some(room) => {
                 tx.unbounded_send(Message::Text(
-                    serde_json::to_string(&response::Payload::Joined(room.to_owned().peers))
-                        .unwrap(),
+                    serde_json::to_string(&Payload::Joined(room.to_owned().peers)).unwrap(),
                 ))
                 .unwrap();
                 room.add_peer(peer_id);
@@ -119,7 +121,7 @@ impl Handler {
             .get(&params.peer_id)
             .unwrap()
             .unbounded_send(Message::Text(
-                serde_json::to_string(&response::Payload::Signal(response::Signal {
+                serde_json::to_string(&Payload::Signal(Signal {
                     peer_id,
                     data: params.data.to_owned(),
                 }))
