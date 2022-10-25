@@ -123,7 +123,8 @@ impl Handler {
             serde_json::to_string(&Payload::Signal(Signal {
                 peer_id,
                 data: params.data.to_owned(),
-            })).unwrap(),
+            }))
+            .unwrap(),
         );
     }
 
