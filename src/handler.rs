@@ -67,10 +67,18 @@ impl Handler {
 
     fn route(&self, peer_id: Uuid, payload: &request::Payload) {
         match payload {
+            request::Payload::WhoAmI(_) => self.who_am_i(peer_id),
             request::Payload::Create(_) => self.create(peer_id),
             request::Payload::Join(params) => self.join(peer_id, params),
             request::Payload::Signal(params) => self.signal(peer_id, params),
         };
+    }
+
+    fn who_am_i(&self, peer_id: Uuid) {
+        self.reply(
+            peer_id,
+            serde_json::to_string(&Payload::WhoAmI(peer_id.to_owned())).unwrap(),
+        );
     }
 
     fn create(&self, peer_id: Uuid) {
@@ -80,15 +88,10 @@ impl Handler {
         self.rooms.lock().unwrap().insert(room.id, room.to_owned());
         info!("CREATED THE ROOM {}", &room.id);
 
-        self.peers
-            .lock()
-            .unwrap()
-            .get(&peer_id)
-            .unwrap()
-            .unbounded_send(Message::Text(
-                serde_json::to_string(&Payload::Created(room.id.to_owned())).unwrap(),
-            ))
-            .unwrap();
+        self.reply(
+            peer_id,
+            serde_json::to_string(&Payload::Created(room.id.to_owned())).unwrap(),
+        );
     }
 
     fn join(&self, peer_id: Uuid, params: &request::Join) {
@@ -115,18 +118,22 @@ impl Handler {
     }
 
     fn signal(&self, peer_id: Uuid, params: &request::Signal) {
+        self.reply(
+            params.peer_id,
+            serde_json::to_string(&Payload::Signal(Signal {
+                peer_id,
+                data: params.data.to_owned(),
+            })).unwrap(),
+        );
+    }
+
+    fn reply(&self, to: Uuid, msg: String) {
         self.peers
             .lock()
             .unwrap()
-            .get(&params.peer_id)
+            .get(&to)
             .unwrap()
-            .unbounded_send(Message::Text(
-                serde_json::to_string(&Payload::Signal(Signal {
-                    peer_id,
-                    data: params.data.to_owned(),
-                }))
-                .unwrap(),
-            ))
+            .unbounded_send(Message::Text(msg))
             .unwrap();
     }
 

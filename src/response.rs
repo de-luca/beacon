@@ -6,6 +6,7 @@ use uuid::Uuid;
 #[serde(tag = "event", content = "data")]
 #[serde(rename_all = "lowercase")]
 pub enum Payload {
+    WhoAmI(Uuid),
     Created(Uuid),
     Joined(HashSet<Uuid>),
     Signal(Signal),

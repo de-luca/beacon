@@ -4,7 +4,6 @@ version = "0.1.0"
 authors = ["Bastien de Luca <dev@de-luca.io>"]
 edition = "2018"
 license = "AGPL-3.0-or-later"
-license-file = "LICENSE"
 
 [dependencies]
 uuid = { version = "0.8", features = ["serde", "v4"] }

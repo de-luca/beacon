@@ -5,10 +5,14 @@ use uuid::Uuid;
 #[serde(tag = "method", content = "params")]
 #[serde(rename_all(deserialize = "lowercase"))]
 pub enum Payload {
+    WhoAmI(WhoAmI),
     Create(Create),
     Join(Join),
     Signal(Signal),
 }
+
+#[derive(Deserialize, Debug)]
+pub struct WhoAmI {}
 
 #[derive(Deserialize, Debug)]
 pub struct Create {}
