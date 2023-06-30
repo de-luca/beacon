@@ -21,14 +21,14 @@ Options:
 RUST_LOG=debug beacon [...]
 ```
 
-Start without TLS if no cert nor key is given.
+Starts without TLS if no cert nor key are given.
 
 ## Dev tools
 
 ### Local certs
 Use [mkcert](https://github.com/FiloSottile/mkcert) for simplicity
 ```shell
- mkcert -install localhost
+mkcert -install localhost
 ```
 
 ### Format

@@ -8,14 +8,16 @@ const GRACE_PERIOD: u64 = 5 * 60;
 pub struct Room {
     pub id: Uuid,
     pub peers: HashSet<Uuid>,
+    pub data: Option<serde_json::Value>,
     emptied: Option<Instant>,
 }
 
 impl Room {
-    pub(crate) fn new() -> Self {
+    pub(crate) fn new(data: Option<serde_json::Value>) -> Self {
         Room {
             id: Uuid::new_v4(),
             peers: HashSet::new(),
+            data,
             emptied: None,
         }
     }
