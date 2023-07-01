@@ -2,7 +2,7 @@ use crate::request;
 use crate::response;
 use crate::room::Room;
 
-use crate::response::{Created, Info, Joined};
+use crate::response::{Created, Info, Joined, Stats};
 use log::info;
 use response::{Error, Payload, Signal};
 use std::collections::HashMap;
@@ -26,6 +26,13 @@ impl Handler {
         Handler {
             peers: Peers::default(),
             rooms: Rooms::default(),
+        }
+    }
+
+    pub(crate) fn get_stats(&self) -> Stats {
+        Stats {
+            peers: self.peers.read().unwrap().len(),
+            rooms: self.rooms.read().unwrap().len(),
         }
     }
 

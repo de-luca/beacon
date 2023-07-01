@@ -85,11 +85,19 @@ async fn main() {
     tokio::spawn(register_cleaner(handler.clone()));
     info!("Registered room cleaner");
 
+    let handler = warp::any().map(move || handler.clone());
+
     let addr: SocketAddr = options.addr.parse().expect("Cannot parse addr!");
 
-    let routes = warp::ws()
-        .and(warp::any().map(move || handler.clone()))
+    let beacon = warp::ws()
+        .and(handler.clone())
         .map(|ws: warp::ws::Ws, handler| ws.on_upgrade(move |ws| handle_connection(ws, handler)));
+
+    let stats = warp::get()
+        .and(handler.clone())
+        .map(|handler: Handler| warp::reply::json(&handler.get_stats()));
+
+    let routes = beacon.or(stats);
 
     if options.cert.is_some() && options.key.is_some() {
         info!("Starting with TLS");

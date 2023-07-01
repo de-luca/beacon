@@ -43,3 +43,9 @@ pub struct Signal {
 pub enum Error {
     RoomDoesNotExists,
 }
+
+#[derive(Serialize, Debug)]
+pub struct Stats {
+    pub peers: usize,
+    pub rooms: usize,
+}
