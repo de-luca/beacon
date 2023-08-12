@@ -45,5 +45,6 @@ cargo clippy
 
 ### Static build
 ```shell
-docker run --rm -it -v "$(pwd)":/home/rust/src ekidd/rust-musl-builder cargo build --release
+cargo install cross --git https://github.com/cross-rs/cross
+cross build --release --target x86_64-unknown-linux-musl
 ```

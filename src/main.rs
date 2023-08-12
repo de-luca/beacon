@@ -4,7 +4,7 @@ mod response;
 mod room;
 
 use crate::handler::Handler;
-use argh::FromArgs;
+use clap::Parser;
 use futures_util::{SinkExt, StreamExt, TryFutureExt};
 use log::{debug, error, info};
 use std::net::SocketAddr;
@@ -18,18 +18,19 @@ use warp::Filter;
 const CLEANER_INTERVAL: u64 = 60;
 
 /// Beacon server
-#[derive(Debug, FromArgs)]
-struct Options {
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+struct Args {
     /// bind addr
-    #[argh(positional, default = "String::from(\"127.0.0.1:3030\")")]
+    #[arg(default_value = "127.0.0.1:3030")]
     addr: String,
 
     /// cert file
-    #[argh(option, short = 'c')]
+    #[arg(short, long)]
     cert: Option<PathBuf>,
 
     /// key file
-    #[argh(option, short = 'k')]
+    #[arg(short, long)]
     key: Option<PathBuf>,
 }
 
@@ -78,7 +79,7 @@ async fn handle_connection(ws: WebSocket, handler: Handler) {
 #[tokio::main]
 async fn main() {
     let _ = env_logger::try_init();
-    let options: Options = argh::from_env();
+    let args = Args::parse();
 
     let handler = Handler::new();
 
@@ -87,7 +88,7 @@ async fn main() {
 
     let handler = warp::any().map(move || handler.clone());
 
-    let addr: SocketAddr = options.addr.parse().expect("Cannot parse addr!");
+    let addr: SocketAddr = args.addr.parse().expect("Cannot parse addr!");
 
     let beacon = warp::ws()
         .and(handler.clone())
@@ -99,12 +100,12 @@ async fn main() {
 
     let routes = beacon.or(stats);
 
-    if options.cert.is_some() && options.key.is_some() {
+    if args.cert.is_some() && args.key.is_some() {
         info!("Starting with TLS");
         warp::serve(routes)
             .tls()
-            .cert_path(options.cert.as_ref().unwrap())
-            .key_path(options.key.as_ref().unwrap())
+            .cert_path(args.cert.as_ref().unwrap())
+            .key_path(args.key.as_ref().unwrap())
             .run(addr)
             .await;
     } else {
